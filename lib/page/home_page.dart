@@ -1,15 +1,12 @@
 import 'dart:async';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:google_generative_ai/src/api.dart';
 import 'package:meeting_copilot_desktop/audio/audio_transcriber.dart';
 import 'package:meeting_copilot_desktop/audio/recorder.dart';
 import 'package:meeting_copilot_desktop/component/conversation_block.dart';
 import 'package:meeting_copilot_desktop/gemini/gemini_handler.dart';
 import 'package:meeting_copilot_desktop/handler/microphone_transcriber_handler.dart';
 import 'package:meeting_copilot_desktop/nls/nls_access_token.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -48,6 +45,8 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _recorder = Recorder();
+    _geminiHandler =
+        GeminiHandler('AIzaSyDw5jXunz0bX3q5gu8TaSkRgIk88G1T940', 'gemini-pro');
     _recorder.listDevices().then(
           (devices) => setState(
             () {
@@ -59,21 +58,27 @@ class _HomePageState extends State<HomePage> {
     _resultStream = _transcriberHandler.resultStream;
 
     _transcriberHandler.resultStream.stream.listen((data) {
-      setState(() {
-        _transcriptions.add(data);
-        _scrollToBottom();
-      });
+      Future.value(data).then(
+          (value) => {
+                _geminiHandler.chat(value).then(
+                    (response) => setState(() {
+                          _transcriptions.add(data);
+                          _transcriptions.add(response.text ?? '处理失败');
+                        }),
+                    onError: (e) => {
+                          setState(() {
+                            _transcriptions.add(data);
+                            _transcriptions.add('处理失败');
+                          })
+                        })
+              },
+          onError: (e) => {
+                setState(() {
+                  _transcriptions.add(data);
+                  _transcriptions.add('处理失败');
+                })
+              });
     });
-    _geminiHandler =
-        GeminiHandler('AIzaSyDw5jXunz0bX3q5gu8TaSkRgIk88G1T940', 'gemini-pro');
-  }
-
-  void _scrollToBottom() {
-    _scrollController.animateTo(
-      _scrollController.position.maxScrollExtent,
-      duration: const Duration(milliseconds: 100),
-      curve: Curves.easeOut,
-    );
   }
 
   @override
@@ -147,25 +152,15 @@ class _HomePageState extends State<HomePage> {
                               size: 36,
                             ),
                             onPressed: () async {
-                              String inputText = _textEditingController.text;
-                              setState(() {
-                                _transcriptions.add(inputText);
-                              });
-                              _geminiHandler
-                                  .chat(inputText)
-                                  .then((response) => setState(() {
-                                        _transcriptions
-                                            .add(response.text ?? '处理失败');
-                                      }));
-                              _textEditingController.clear();
-                              setState(() {
-                                _scrollToBottom();
-                              });
+                              processInput(_textEditingController.text);
                             },
                           ),
                         ),
                       ),
                     ),
+                    onSubmitted: (String value) {
+                      processInput(value);
+                    },
                   ),
                 ),
               ],
@@ -173,7 +168,7 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-      /*floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton(
         onPressed: () {
           _audioTranscriber.startMicrophoneTranscriber(
             _selectedDevice,
@@ -182,7 +177,27 @@ class _HomePageState extends State<HomePage> {
         },
         tooltip: 'Start record',
         child: const Icon(Icons.keyboard_voice_sharp),
-      ),*/
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
     );
+  }
+
+  void processInput(String text) {
+    if (text.isEmpty) {
+      return;
+    }
+    setState(() {
+      _transcriptions.add(text);
+    });
+    _geminiHandler.chat(text).then(
+        (response) => setState(() {
+              _transcriptions.add(response.text ?? '处理失败');
+            }),
+        onError: (e) => {
+              setState(() {
+                _transcriptions.add('处理失败');
+              })
+            });
+    _textEditingController.clear();
   }
 }

@@ -27,9 +27,13 @@ class GeminiHandler {
   }
 
   Future<GenerateContentResponse> chat(String message) {
-    var content = Content.text(message);
-    var response = _chat.sendMessage(content);
-    return response;
+    try {
+      var content = Content.text(message);
+      var response = _chat.sendMessage(content);
+      return response;
+    } catch (e) {
+      return Future.error(e);
+    }
   }
 
   Stream<GenerateContentResponse> chatStream(String message) {
