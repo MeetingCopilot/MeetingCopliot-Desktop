@@ -63,7 +63,7 @@ class _HomePageState extends State<HomePage> {
                 _geminiHandler.chat(value).then(
                     (response) => setState(() {
                           _transcriptions.add(data);
-                          _transcriptions.add(response.text ?? '处理失败');
+                          _transcriptions.add(response);
                         }),
                     onError: (e) => {
                           setState(() {
@@ -85,7 +85,6 @@ class _HomePageState extends State<HomePage> {
   void dispose() {
     _resultStream.close();
     _scrollController.dispose();
-    print('disposed');
     super.dispose();
   }
 
@@ -143,8 +142,7 @@ class _HomePageState extends State<HomePage> {
                         child: Container(
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(8.0),
-                            // 设置圆角为8.0
-                            color: Colors.transparent, // 使颜色透明，以便显示按钮
+                            color: Colors.transparent,
                           ),
                           child: IconButton(
                             icon: const Icon(
@@ -186,15 +184,14 @@ class _HomePageState extends State<HomePage> {
     if (text.isEmpty) {
       return;
     }
-    setState(() {
-      _transcriptions.add(text);
-    });
     _geminiHandler.chat(text).then(
         (response) => setState(() {
-              _transcriptions.add(response.text ?? '处理失败');
+              _transcriptions.add(text);
+              _transcriptions.add(response);
             }),
         onError: (e) => {
               setState(() {
+                _transcriptions.add(text);
                 _transcriptions.add('处理失败');
               })
             });

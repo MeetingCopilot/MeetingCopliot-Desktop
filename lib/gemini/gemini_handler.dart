@@ -26,13 +26,13 @@ class GeminiHandler {
     return response;
   }
 
-  Future<GenerateContentResponse> chat(String message) {
+  Future<String> chat(String message) async {
     try {
       var content = Content.text(message);
-      var response = _chat.sendMessage(content);
-      return response;
+      var response = await _chat.sendMessage(content);
+      return response.text ?? '处理失败';
     } catch (e) {
-      return Future.error(e);
+      return Future.value('处理失败');
     }
   }
 

@@ -23,7 +23,7 @@ class MicrophoneTranscriberHandler extends TranscriberHandler {
 
   @override
   void onSentenceEnd(TranscriberResponse response) {
-    print('onSentenceEnd: $response');
+    print('onSentenceEnd: ${response.payload?['result']}');
     resultStream.sink.add(response.payload?['result']);
   }
 
