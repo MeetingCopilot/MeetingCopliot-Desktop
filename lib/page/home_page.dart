@@ -1,10 +1,15 @@
 import 'dart:async';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:google_generative_ai/src/api.dart';
 import 'package:meeting_copilot_desktop/audio/audio_transcriber.dart';
 import 'package:meeting_copilot_desktop/audio/recorder.dart';
+import 'package:meeting_copilot_desktop/component/conversation_block.dart';
+import 'package:meeting_copilot_desktop/gemini/gemini_handler.dart';
 import 'package:meeting_copilot_desktop/handler/microphone_transcriber_handler.dart';
 import 'package:meeting_copilot_desktop/nls/nls_access_token.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -33,7 +38,11 @@ class _HomePageState extends State<HomePage> {
 
   final ScrollController _scrollController = ScrollController();
 
+  final TextEditingController _textEditingController = TextEditingController();
+
   final List<String> _transcriptions = [];
+
+  late final GeminiHandler _geminiHandler;
 
   @override
   void initState() {
@@ -55,6 +64,8 @@ class _HomePageState extends State<HomePage> {
         _scrollToBottom();
       });
     });
+    _geminiHandler =
+        GeminiHandler('AIzaSyDw5jXunz0bX3q5gu8TaSkRgIk88G1T940', 'gemini-pro');
   }
 
   void _scrollToBottom() {
@@ -79,7 +90,7 @@ class _HomePageState extends State<HomePage> {
       body: Row(
         children: <Widget>[
           Expanded(
-            flex: 30,
+            flex: 25,
             child: Container(
               color: Colors.grey[100],
               child: DropdownButton<String>(
@@ -100,22 +111,69 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
           Expanded(
-            flex: 70,
-            child: ListView.builder(
-              controller: _scrollController,
-              itemCount: _transcriptions.length,
-              itemBuilder: (BuildContext context, int index) {
-                return ListTile(
-                  title: Center(
-                    child: Text(_transcriptions[index]),
+            flex: 75,
+            child: Column(
+              children: [
+                Expanded(
+                  child: ListView.builder(
+                    controller: _scrollController,
+                    itemCount: _transcriptions.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      return ConversationBlock(
+                        textBody: _transcriptions[index],
+                        isMe: index % 2 == 0,
+                      );
+                    },
                   ),
-                );
-              },
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: TextField(
+                    controller: _textEditingController,
+                    decoration: InputDecoration(
+                      hintText: '请输入消息...',
+                      border: const OutlineInputBorder(),
+                      suffixIcon: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8.0),
+                            // 设置圆角为8.0
+                            color: Colors.transparent, // 使颜色透明，以便显示按钮
+                          ),
+                          child: IconButton(
+                            icon: const Icon(
+                              Icons.arrow_circle_up,
+                              size: 36,
+                            ),
+                            onPressed: () async {
+                              String inputText = _textEditingController.text;
+                              setState(() {
+                                _transcriptions.add(inputText);
+                              });
+                              _geminiHandler
+                                  .chat(inputText)
+                                  .then((response) => setState(() {
+                                        _transcriptions
+                                            .add(response.text ?? '处理失败');
+                                      }));
+                              _textEditingController.clear();
+                              setState(() {
+                                _scrollToBottom();
+                              });
+                            },
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
+      /*floatingActionButton: FloatingActionButton(
         onPressed: () {
           _audioTranscriber.startMicrophoneTranscriber(
             _selectedDevice,
@@ -124,7 +182,7 @@ class _HomePageState extends State<HomePage> {
         },
         tooltip: 'Start record',
         child: const Icon(Icons.keyboard_voice_sharp),
-      ),
+      ),*/
     );
   }
 }
