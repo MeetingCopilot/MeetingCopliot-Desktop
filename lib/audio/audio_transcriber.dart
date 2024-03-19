@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:typed_data';
-import 'package:meeting_copilot_desktop/handler/microphone_transcriber_handler.dart';
 import 'package:meeting_copilot_desktop/handler/transcriber_handler.dart';
 import 'package:record/record.dart';
 import 'package:uuid/uuid.dart';
@@ -16,8 +15,6 @@ class AudioTranscriber {
   late final InputDevice _inputDevice;
 
   late WebSocketChannel _transcriberChannel;
-
-  late final TranscriberHandler _transcriberHandler;
 
   AudioTranscriber({
     required this.accessToken,

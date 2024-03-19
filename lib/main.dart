@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:meeting_copilot_desktop/page/home_page.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 
 void main() {
   appWindow.size = const Size(1000, 700);
-  debugPaintSizeEnabled = true;
   runApp(const MyApp());
   appWindow.show();
   doWhenWindowReady(() {

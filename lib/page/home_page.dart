@@ -107,7 +107,7 @@ class _HomePageState extends State<HomePage> {
               itemBuilder: (BuildContext context, int index) {
                 return ListTile(
                   title: Center(
-                    child: Text('Transcription: ${_transcriptions[index]}'),
+                    child: Text(_transcriptions[index]),
                   ),
                 );
               },

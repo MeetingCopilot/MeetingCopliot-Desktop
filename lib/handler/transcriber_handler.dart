@@ -29,7 +29,7 @@ abstract class TranscriberHandler {
    */
   void onCompleted(TranscriberResponse response);
 
-  bool processMessage(String message) {
+  void processMessage(String message) {
     TranscriberResponse response =
         TranscriberResponse.fromJson(jsonDecode(message));
 
@@ -39,29 +39,29 @@ abstract class TranscriberHandler {
       case 'TranscriptionStarted':
         // 开始识别
         onReady(response);
-        return true;
+        break;
       case 'SentenceBegin':
         // 检测到句子开始
         onSentenceBegin(response);
-        return true;
+        break;
       case 'TranscriptionResultChanged':
         // 句子结果变更
         onResultChanged(response);
-        return true;
+        break;
       case 'SentenceEnd':
         // 句子结束
         onSentenceEnd(response);
-        return true;
+        break;
       case 'TranscriptionCompleted':
         // 关闭识别（识别完成）
         onCompleted(response);
-        return true;
+        break;
       default:
         // 未知，统一不处理
         print('Unknown event happened: $name');
         print('Message: $message');
         print('Response: ${json.encode(response)}');
-        return true;
+        break;
     }
   }
 }
