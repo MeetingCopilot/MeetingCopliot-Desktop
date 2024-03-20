@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:meeting_copilot_desktop/audio/audio_transcriber.dart';
 import 'package:meeting_copilot_desktop/audio/recorder.dart';
 import 'package:meeting_copilot_desktop/component/conversation_block.dart';
+import 'package:meeting_copilot_desktop/component/user_info.dart';
 import 'package:meeting_copilot_desktop/entity/conversation.dart';
 import 'package:meeting_copilot_desktop/gemini/gemini_handler.dart';
 import 'package:meeting_copilot_desktop/handler/microphone_transcriber_handler.dart';
@@ -46,8 +47,10 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _recorder = Recorder();
-    _geminiHandler =
-        GeminiHandler('AIzaSyDw5jXunz0bX3q5gu8TaSkRgIk88G1T940', 'gemini-pro');
+    _geminiHandler = GeminiHandler(
+      'AIzaSyDw5jXunz0bX3q5gu8TaSkRgIk88G1T940',
+      'gemini-pro',
+    );
     _recorder.listDevices().then(
           (devices) => setState(
             () {
@@ -87,8 +90,11 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void dispose() {
-    _resultStream.close();
-    _scrollController.dispose();
+    _recorder.stop().then((value) => {
+          _resultStream.close(),
+          _scrollController.dispose(),
+          _textEditingController.dispose(),
+        });
     super.dispose();
   }
 
@@ -99,23 +105,41 @@ class _HomePageState extends State<HomePage> {
         children: <Widget>[
           Expanded(
             flex: 25,
-            child: Container(
-              color: Colors.grey[100],
-              child: DropdownButton<String>(
-                value: _selectedDevice,
-                onChanged: (String? newValue) {
-                  setState(() {
-                    _selectedDevice = newValue!;
-                  });
-                },
-                items:
-                    _deviceLabels.map<DropdownMenuItem<String>>((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value, // Ensure each value is unique
-                    child: Text(value),
-                  );
-                }).toList(), // Convert to set to remove duplicates
-              ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  children: [
+                    DropdownButton<String>(
+                      value: _selectedDevice,
+                      onChanged: (String? newValue) {
+                        setState(() {
+                          _selectedDevice = newValue!;
+                        });
+                      },
+                      items: _deviceLabels
+                          .map<DropdownMenuItem<String>>((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value, // Ensure each value is unique
+                          child: Text(value),
+                        );
+                      }).toList(), // Convert to set to remove duplicates
+                    ),
+                  ],
+                ),
+                const Column(
+                  children: [
+                    UserInfo(),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: VerticalDivider(
+              color: Colors.grey.withOpacity(0.3),
+              thickness: 1,
             ),
           ),
           Expanded(
@@ -179,7 +203,7 @@ class _HomePageState extends State<HomePage> {
         tooltip: 'Start record',
         child: const Icon(Icons.keyboard_voice_sharp),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 

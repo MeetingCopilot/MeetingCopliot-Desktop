@@ -46,10 +46,16 @@ class AudioTranscriber {
         );
   }
 
-  void _createTranscriberWss(String token) {
+  Future<void> _createTranscriberWss(String token) async {
     final wsUrl = Uri.parse(
         'wss://nls-gateway-cn-shanghai.aliyuncs.com/ws/v1?token=$token');
     _transcriberChannel = WebSocketChannel.connect(wsUrl);
+
+    try {
+      await _transcriberChannel.ready;
+    } catch (e) {
+      return;
+    }
   }
 
   void _listeningTranscriber(TranscriberHandler transcriberHandler) {

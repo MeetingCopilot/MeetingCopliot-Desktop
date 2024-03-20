@@ -10,8 +10,6 @@ class Recorder {
 
   List<InputDevice> _deviceList = [];
 
-  bool _hasStartRecord = false;
-
   late Stream<Uint8List> recordStream;
 
   Recorder() {
@@ -28,5 +26,9 @@ class Recorder {
               )
               .toList(),
         );
+  }
+
+  Future<void> stop() async {
+    await _recorder.stop();
   }
 }
