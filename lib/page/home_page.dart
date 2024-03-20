@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:meeting_copilot_desktop/audio/audio_transcriber.dart';
 import 'package:meeting_copilot_desktop/audio/recorder.dart';
 import 'package:meeting_copilot_desktop/component/conversation_block.dart';
+import 'package:meeting_copilot_desktop/entity/conversation.dart';
 import 'package:meeting_copilot_desktop/gemini/gemini_handler.dart';
 import 'package:meeting_copilot_desktop/handler/microphone_transcriber_handler.dart';
 import 'package:meeting_copilot_desktop/nls/nls_access_token.dart';
@@ -37,7 +38,7 @@ class _HomePageState extends State<HomePage> {
 
   final TextEditingController _textEditingController = TextEditingController();
 
-  final List<String> _transcriptions = [];
+  final List<Conversation> _conversations = [];
 
   late final GeminiHandler _geminiHandler;
 
@@ -58,24 +59,27 @@ class _HomePageState extends State<HomePage> {
     _resultStream = _transcriberHandler.resultStream;
 
     _transcriberHandler.resultStream.stream.listen((data) {
+      Conversation conversation = Conversation(
+        question: data,
+        answer: '正在处理...',
+      );
+
+      _conversations.add(conversation);
       Future.value(data).then(
           (value) => {
                 _geminiHandler.chat(value).then(
                     (response) => setState(() {
-                          _transcriptions.add(data);
-                          _transcriptions.add(response);
+                          conversation.answer = response;
                         }),
                     onError: (e) => {
                           setState(() {
-                            _transcriptions.add(data);
-                            _transcriptions.add('处理失败');
+                            conversation.answer = '处理失败';
                           })
                         })
               },
           onError: (e) => {
                 setState(() {
-                  _transcriptions.add(data);
-                  _transcriptions.add('处理失败');
+                  conversation.answer = '处理失败';
                 })
               });
     });
@@ -121,11 +125,10 @@ class _HomePageState extends State<HomePage> {
                 Expanded(
                   child: ListView.builder(
                     controller: _scrollController,
-                    itemCount: _transcriptions.length,
+                    itemCount: _conversations.length,
                     itemBuilder: (BuildContext context, int index) {
                       return ConversationBlock(
-                        textBody: _transcriptions[index],
-                        isMe: index % 2 == 0,
+                        conversation: _conversations[index],
                       );
                     },
                   ),
@@ -146,7 +149,7 @@ class _HomePageState extends State<HomePage> {
                           ),
                           child: IconButton(
                             icon: const Icon(
-                              Icons.arrow_circle_up,
+                              Icons.arrow_upward_outlined,
                               size: 36,
                             ),
                             onPressed: () async {
@@ -184,17 +187,23 @@ class _HomePageState extends State<HomePage> {
     if (text.isEmpty) {
       return;
     }
+
+    Conversation conversation = Conversation(
+      question: text,
+      answer: '正在处理...',
+    );
+    setState(() {
+      _conversations.add(conversation);
+    });
     _geminiHandler.chat(text).then(
         (response) => setState(() {
-              _transcriptions.add(text);
-              _transcriptions.add(response);
+              conversation.answer = response;
             }),
         onError: (e) => {
               setState(() {
-                _transcriptions.add(text);
-                _transcriptions.add('处理失败');
+                conversation.answer = '处理失败';
               })
             });
-    _textEditingController.clear();
+    _textEditingController.text = '';
   }
 }
