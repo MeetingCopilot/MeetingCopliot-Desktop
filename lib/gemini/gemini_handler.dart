@@ -1,4 +1,5 @@
 import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:meeting_copilot_desktop/prompt/prompt.dart';
 
 class GeminiHandler {
   late final String _apiKey;
@@ -11,7 +12,7 @@ class GeminiHandler {
 
   GeminiHandler(this._apiKey, this._modeName) {
     _model = GenerativeModel(model: _modeName, apiKey: _apiKey);
-    _chat = _model.startChat(history: []);
+    _chat = _model.startChat(history: Prompt.javaWebPrompt);
   }
 
   Future<String?> sendMessage(String message) async {

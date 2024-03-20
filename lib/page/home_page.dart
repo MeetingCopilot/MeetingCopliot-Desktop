@@ -203,7 +203,7 @@ class _HomePageState extends State<HomePage> {
         tooltip: 'Start record',
         child: const Icon(Icons.keyboard_voice_sharp),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerTop,
     );
   }
 
